@@ -3,6 +3,7 @@ package com.coco.customcache
 import org.springframework.beans.factory.BeanNameAware
 import org.springframework.beans.factory.FactoryBean
 import org.springframework.beans.factory.InitializingBean
+import org.springframework.transaction.interceptor.TransactionAspectSupport
 import org.springframework.util.StringUtils
 
 

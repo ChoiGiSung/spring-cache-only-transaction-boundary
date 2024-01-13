@@ -39,11 +39,27 @@ class KReadTransactionCache(
     }
 
     override fun <T : Any?> get(key: Any, type: Class<T>?): T? {
-        TODO("Not yet implemented")
+        val bindedCache = getBindedCache(name) ?: return null
+        val value = bindedCache[key]
+        return if (value != null) {
+            fromStoreValue(value) as T
+        } else {
+            null
+        }
     }
 
     override fun <T : Any?> get(key: Any, valueLoader: Callable<T>): T? {
-        TODO("Not yet implemented")
+        val bindedCache = getBindedCache(name) ?: return null
+        val value = bindedCache[key]
+        return if (value != null) {
+            fromStoreValue(value) as T
+        } else {
+            try {
+                valueLoader.call()
+            } catch (ex: Exception) {
+                null
+            }
+        }
     }
 
     override fun put(key: Any, value: Any?) {
