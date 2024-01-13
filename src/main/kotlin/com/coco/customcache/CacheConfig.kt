@@ -16,14 +16,24 @@ class CacheConfig {
         val cacheManager = SimpleCacheManager()
         cacheManager.setCaches(
             setOf(
-                ConcurrentMapCacheFactoryBean().apply {
-                    this.setName("default")
-                }.`object` as org.springframework.cache.Cache,
-                KReadTransactionCacheFactoryBean().apply {
-                    this.setName("cacheNameByAnnotation")
-                }.`object` as org.springframework.cache.Cache
+                defaultCacheFactoryBean().`object`,
+                kReadTransactionCacheFactoryBean().`object`
             )
         )
         return cacheManager
+    }
+
+    @Bean
+    fun defaultCacheFactoryBean(): ConcurrentMapCacheFactoryBean {
+        return ConcurrentMapCacheFactoryBean().apply {
+            this.setName("default")
+        }
+    }
+
+    @Bean
+    fun kReadTransactionCacheFactoryBean(): KReadTransactionCacheFactoryBean {
+        return KReadTransactionCacheFactoryBean().apply {
+            this.setName("cacheNameByAnnotation")
+        }
     }
 }
