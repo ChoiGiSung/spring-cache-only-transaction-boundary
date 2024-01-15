@@ -15,25 +15,8 @@ class CacheConfig {
     fun cacheManager(): CacheManager {
         val cacheManager = SimpleCacheManager()
         cacheManager.setCaches(
-            setOf(
-                defaultCacheFactoryBean().`object`,
-                kReadTransactionCacheFactoryBean().`object`
-            )
+            CacheType.values().map { TransactionScopedCache(it.name, it.allowNullValues) }.toSet(),
         )
         return cacheManager
-    }
-
-    @Bean
-    fun defaultCacheFactoryBean(): ConcurrentMapCacheFactoryBean {
-        return ConcurrentMapCacheFactoryBean().apply {
-            this.setName("default")
-        }
-    }
-
-    @Bean
-    fun kReadTransactionCacheFactoryBean(): KReadTransactionCacheFactoryBean {
-        return KReadTransactionCacheFactoryBean().apply {
-            this.setName("cacheNameByAnnotation")
-        }
     }
 }
