@@ -7,11 +7,11 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport
 import org.springframework.util.StringUtils
 
 
-class KReadTransactionCacheFactoryBean : FactoryBean<KReadTransactionCache?>, BeanNameAware,
+class KReadTransactionCacheFactoryBean : FactoryBean<TransactionScopedCache?>, BeanNameAware,
     InitializingBean {
     private var name = ""
     private var allowNullValues = true
-    private var cache: KReadTransactionCache? = null
+    private var cache: TransactionScopedCache? = null
 
     /**
      * Specify the name of the cache.
@@ -39,15 +39,15 @@ class KReadTransactionCacheFactoryBean : FactoryBean<KReadTransactionCache?>, Be
     }
 
     override fun afterPropertiesSet() {
-        cache = KReadTransactionCache(name, allowNullValues)
+        cache = TransactionScopedCache(name, allowNullValues)
     }
 
-    override fun getObject(): KReadTransactionCache? {
+    override fun getObject(): TransactionScopedCache? {
         return cache
     }
 
     override fun getObjectType(): Class<*> {
-        return KReadTransactionCache::class.java
+        return TransactionScopedCache::class.java
     }
 
     override fun isSingleton(): Boolean {

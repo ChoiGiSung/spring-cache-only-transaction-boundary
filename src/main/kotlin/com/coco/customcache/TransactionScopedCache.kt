@@ -7,10 +7,18 @@ import java.io.Serializable
 import java.util.concurrent.Callable
 
 
-class KReadTransactionCache(
-    val name: String,
-    val isAllowNullValues: Boolean = true
-): Cache {
+/**
+ * The cache in the transaction.
+ * It is a local cache and the life cycle is the same as a transaction.
+ * It is similar to local cache in mybatis, but the difference is that the contents of
+ * the cache do not disappear when you insert, update, or delete.
+ *
+ * origin source: https://stackoverflow.com/questions/49695413/spring-cache-binded-only-to-the-current-transaction
+ */
+class TransactionScopedCache(
+    private val name: String,
+    private val isAllowNullValues: Boolean = true
+) : Cache {
     /**
      * Create a new Map with the specified name and the
      * given internal ConcurrentMap to use.
@@ -18,9 +26,6 @@ class KReadTransactionCache(
      * @param isAllowNullValues whether to allow `null` values
      * (adapting them to an internal null holder value)
      */
-
-    val nativeCache: Map<*, *>?
-        get() = getBindedCache(name)
 
     override fun getName(): String {
         return this.name
@@ -33,7 +38,7 @@ class KReadTransactionCache(
     override fun get(key: Any): Cache.ValueWrapper? {
         val bindedCache = getBindedCache(
             name
-        ) ?: return null
+        )
         val value = bindedCache[key]
         return if (value != null) SimpleValueWrapper(fromStoreValue(value)) else null
     }
@@ -65,21 +70,21 @@ class KReadTransactionCache(
     override fun put(key: Any, value: Any?) {
         val bindedCache = getBindedCache(
             name
-        ) ?: return
+        )
         bindedCache[key] = toStoreValue(value)
     }
 
     override fun evict(key: Any) {
         val bindedCache = getBindedCache(
             name
-        ) ?: return
+        )
         bindedCache.remove(key)
     }
 
     override fun clear() {
         val bindedCache = getBindedCache(
             name
-        ) ?: return
+        )
         bindedCache.clear()
     }
 
@@ -101,23 +106,29 @@ class KReadTransactionCache(
      * @param userValue the given user value
      * @return the value to store
      */
-    protected fun toStoreValue(userValue: Any?): Any? {
+    private fun toStoreValue(userValue: Any?): Any? {
         return if (isAllowNullValues && userValue == null) {
             NULL_HOLDER
         } else userValue
     }
 
+    private fun getBindedCache(name: String): MutableMap<Any, Any?> {
+        return if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            var cache: MutableMap<Any, Any?>? =
+                TransactionSynchronizationManager.getResource(name) as MutableMap<Any, Any?>?
+            if (cache == null) {
+                cache = mutableMapOf()
+                TransactionSynchronizationManager.bindResource(name, cache)
+                TransactionScopedCacheSynchronization(this).register()
+            }
+            cache
+        } else {
+            mutableMapOf()
+        }
+    }
+
     private class NullHolder : Serializable
     companion object {
         private val NULL_HOLDER: Any = NullHolder()
-        protected fun getBindedCache(name: String): MutableMap<Any, Any?> {
-            var cache: MutableMap<Any, Any?>? = null
-            cache = TransactionSynchronizationManager.getResource(name) as MutableMap<Any, Any?>?
-            if (cache == null) {
-                cache = HashMap()
-                TransactionSynchronizationManager.bindResource(name, cache)
-            }
-            return cache
-        }
     }
 }
