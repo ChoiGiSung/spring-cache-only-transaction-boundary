@@ -5,7 +5,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 /**
  *   It should be used when using the thread pool.
- *   Delete the cache before it is returned because the KReadTransactionCache is stored in thread local.
+ *   Delete the cache before it is returned because the TransactionScopedCache is stored in thread local.
  */
 class TransactionScopedCacheSynchronization(private val cache: TransactionScopedCache) : TransactionSynchronization {
 
